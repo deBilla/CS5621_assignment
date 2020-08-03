@@ -65,25 +65,23 @@ opt = SGD(lr=0.01, momentum=0.9)
 model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
 
 # Create the model
-modelDenoiser = Sequential()
-modelDenoiser.add(Conv2D(64, kernel_size=(3, 3), activation='relu', kernel_initializer='he_uniform', input_shape=(28, 28, 1)))
-modelDenoiser.add(Conv2D(32, kernel_size=(3, 3), activation='relu', kernel_initializer='he_uniform'))
-modelDenoiser.add(Conv2DTranspose(32, kernel_size=(3,3), activation='relu', kernel_initializer='he_uniform'))
-modelDenoiser.add(Conv2DTranspose(64, kernel_size=(3,3), activation='relu', kernel_initializer='he_uniform'))
-modelDenoiser.add(Conv2D(1, kernel_size=(3, 3), activation='sigmoid', padding='same'))
+denoiser = Sequential()
+denoiser.add(Conv2D(64, kernel_size=(3, 3), activation='relu', kernel_initializer='he_uniform', input_shape=(28, 28, 1)))
+denoiser.add(Conv2DTranspose(64, kernel_size=(3,3), activation='relu', kernel_initializer='he_uniform'))
+denoiser.add(Conv2D(1, kernel_size=(3, 3), activation='sigmoid', padding='same'))
 
 # Compile and fit data
-modelDenoiser.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-modelDenoiser.fit(x_train_noisy, x_train,
+denoiser.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+denoiser.fit(x_train_noisy, x_train,
                 epochs=5,
                 batch_size=64,
                 validation_split=0.2)
 
-x_denoised_train = modelDenoiser.predict(x_train_noisy)
-x_denoised_test = modelDenoiser.predict(x_test_noisy)
+x_denoised_train = denoiser.predict(x_train_noisy)
+x_denoised_test = denoiser.predict(x_test_noisy)
 
 # Evaluate the model
-history = model.fit(x_denoised_train, y_train, epochs=10, batch_size=32, validation_data=(x_test_noisy, y_test))
+history = model.fit(x_denoised_train, y_train, epochs=10, batch_size=32, validation_data=(x_denoised_test, y_test))
 
 test_loss, test_acc = model.evaluate(x_denoised_test, y_test)
 print('Accuracy:', test_acc)
